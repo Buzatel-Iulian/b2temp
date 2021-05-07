@@ -1,0 +1,105 @@
+#!/bin/bash
+
+on_exit () {
+	clear
+	tput cnorm   -- normal
+}
+
+trap "on_exit" EXIT
+
+tput civis      -- invisible
+declare -a garph
+declare -i i=0
+declare -i j=0
+declare -i nrs=121
+declare -i prev_LINES=0
+declare -i prev_COLUMNS=0
+declare -i jlim=20
+colors=( "\x1B[31m" "\x1B[33m" "\x1B[93m" "\x1B[37m" "\x1B[36m" )
+
+while [ $i -le $nrs ]
+do
+	graph[$i]=40
+	i+=1
+done
+
+############################################################################################################################
+while :
+do
+	temp=( $(cat /sys/class/thermal/thermal_zone0/temp) )
+	temp=$((temp/1000))
+	#temp=20                                    #_-='
+
+	if [[ $LINES -ne $prev_LINES || $COLUMNS -ne $prev_COLUMNS ]]
+	then
+		prev_LINES=$LINES
+		prev_COLUMNS=$COLUMNS
+		clear
+	fi
+
+	if [[ $LINES -ge 23 ]]
+	then
+		ul=10
+		dl=10
+	else
+		ul=$((($LINES-3)/2))
+		dl=$(($LINES-$ul-3))
+	fi
+
+	sleep 1
+	echo -e "\033[41A"
+
+	graph[$nrs]=$temp
+	j=$((20-($temp-40)/2-$ul))
+	jlim=$((20-($temp-40)/2+$dl))
+
+######################################################## j loop
+	while [ $j -le $jlim ]
+	do
+
+		echo -en "${colors[$((j/5))]}"
+		echo -n "├"
+
+		if [[ $COLUMNS -gt 125 ]]
+		then
+			i=0
+		else
+			i=$((121-$COLUMNS+5))
+		fi
+
+######################################################## i loop
+		while [ $i -le $nrs ]
+		do
+
+			if [ $(((graph[$i]-40)/2)) -eq $((20-j)) ]       ##
+			then
+				if [ $((graph[$i]%2)) -eq 0 ]                   #
+				then
+					echo -n "▄"
+				else
+					echo -n "█"
+				fi                                        #
+			elif [ $(((graph[$i]-40)/2)) -gt $((20-j)) ]
+			then
+				echo -n "░"
+			else
+				echo -n "-"
+			fi                                        ##
+			i+=1
+		done
+######################################################## i end
+		echo "┐$((40+(20-$j)*2))"
+		j+=1
+	done
+######################################################## j end
+	echo -en "\033[3;4H\033[3;42;30m[ T = ${temp} °C ]\e[0m"
+
+	i=0
+	while [ $i -le $((nrs-1)) ]
+	do
+		graph[$i]=${graph[$i+1]}
+		i+=1
+	done
+
+done
+############################################################################################################################

@@ -1,7 +1,7 @@
 
 #	b2temp 
 
-![missing image](Pictures/goodScreenshot from 2021-05-06 21-33-12.png)
+![missing image](Pictures/goodScreenshot.png)
 
 ## Description
 
